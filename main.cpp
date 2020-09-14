@@ -2,43 +2,54 @@
 #include <windows.h>
 #include <vector>
 
-HANDLE h = INVALID_HANDLE_VALUE;
+HANDLE h1 = INVALID_HANDLE_VALUE;
+HANDLE h2 = INVALID_HANDLE_VALUE;
 std::vector<int> data;
 
-bool getData = false;
-bool isDataReady = false;
+//bool getData = false;
+//bool isDataReady = false;
+
+int SetEventName(const char* name) {
+    HANDLE h = OpenEventA(EVENT_MODIFY_STATE, true, name);
+    if (h == INVALID_HANDLE_VALUE) return -1;
+    SetEvent(h);
+    return 0;
+}
 
 DWORD WINAPI Client(LPVOID arg) {
-    HANDLE he = OpenEventA(EVENT_MODIFY_STATE, true, "MyServer");
-    SetEvent(he);
-    std::cout << "Client Event\n";
-    getData = true;
+    SetEventName("MyClient"); // activate server 
+
+    std::cout << "Client Event. Wait data[]\n";
+    DWORD res = WaitForSingleObject(h2, INFINITE);
+
     std::cout << data[0] << " " << data[1] << "\n";
     return 0;
 }
 
 DWORD WINAPI Server(LPVOID arg) {
-    std::cout << "Server Wait\n";
-    DWORD res = WaitForSingleObject(h, INFINITE);
+    std::cout << "Server Start. Wait Client Event\n";
+    DWORD res = WaitForSingleObject(h1, INFINITE);
+
     data.push_back(1001);
     data.push_back(1002);
-    isDataReady = TRUE;
-    std::cout << "Server Activ\n";
+
+    SetEventName("MyServer"); // activate client 
     return 0;
 }
 
 int main()
 {
-    h = CreateEventA(0, FALSE, FALSE, "MyServer");
-    if (h == INVALID_HANDLE_VALUE) {
-        return -1;
-    }
+    h1 = CreateEventA(0, FALSE, FALSE, "MyClient");
+    if (h1 == INVALID_HANDLE_VALUE) return -1;
+
+    h2 = CreateEventA(0, FALSE, FALSE, "MyServer");
+    if (h2 == INVALID_HANDLE_VALUE) return -1;
 
     CreateThread(0, 0, Server, 0, 0, 0);
-
-    Sleep(2000);
-    
     CreateThread(0, 0, Client, 0, 0, 0);
-
+       
     Sleep(1000);
+
+    return 0;
 }
+
