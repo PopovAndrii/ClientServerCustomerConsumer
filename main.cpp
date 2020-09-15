@@ -6,9 +6,6 @@ HANDLE h1 = INVALID_HANDLE_VALUE;
 HANDLE h2 = INVALID_HANDLE_VALUE;
 std::vector<int> data;
 
-//bool getData = false;
-//bool isDataReady = false;
-
 int SetEventName(const char* name) {
     HANDLE h = OpenEventA(EVENT_MODIFY_STATE, true, name);
     if (h == INVALID_HANDLE_VALUE) return -1;
